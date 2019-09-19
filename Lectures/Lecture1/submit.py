@@ -5,7 +5,7 @@ import os
 import requests
 from datetime import datetime
 
-SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzaG2qqiE9xSJwumi_gbPjDjYqe0_8tHXe_OApamvrnV0pk9uBR/exec"
+SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxm8535zuydzAV54kB4Z6SLEvq9oBg5GWM6EittgUOY7T6nI_g/exec"
 
 def get_jupyter_notebooks(extension="ipynb"):
     print('Reading files in directory...')
