@@ -5,16 +5,7 @@ import os
 import requests
 from datetime import datetime
 
-SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzaG2qqiE9xSJwumi_gbPjDjYqe0_8tHXe_OApamvrnV0pk9uBR/exec"
-
-REQUIRED_TAGS = {
-    'either_factor_output': None,
-    'yellow_pages_output': None,
-    '3a': None,
-    '3b': None,
-    '3c': None,
-    '3d': None
-}
+SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxm8535zuydzAV54kB4Z6SLEvq9oBg5GWM6EittgUOY7T6nI_g/exec"
 
 def get_jupyter_notebooks(extension="ipynb"):
     print('Reading files in directory...')
@@ -28,22 +19,7 @@ def read_notebook(filename):
     cells = nb['cells']
     for cell in cells:
         if cell['metadata'] and 'tags' in cell['metadata']:
-            source = ''.join(cell['source'])
-            output = None
-            if 'outputs' in cell:
-                try:
-                    output = next(map(
-                        lambda output: ''.join(output['data']['text/plain']),
-                        filter(
-                            lambda output: output['output_type'] == 'execute_result',
-                            cell['outputs']
-                        )
-                    ))
-                except StopIteration:
-                    pass
-            for tag in cell['metadata']['tags']:
-                nb_submission[tag] = source
-                nb_submission['{0}_output'.format(tag)] = output
+            nb_submission[cell['metadata']['tags'][0]] = ''.join(cell['source'])
     print('Parsed', filename)
     return nb_submission
 
@@ -60,51 +36,43 @@ def transform_sheet_data(sheet_data):
     try:
         transformed = {}
         for k, v in sheet_data.items():
-            transformed[k] = v
+            if k == 'name':
+                transformed['name'] = v.replace('**Name**:', '').strip()
+            elif k == 'major':
+                transformed['major'] = v.replace('**Major**:', '').strip()
+            elif k == 'fun-fact':
+                transformed['fun-fact'] = v.replace('**Fun Fact**:', '').strip()
+            else:
+                transformed[k] = v
         return transformed
     except Exception as e:
         return sheet_data
 
-def is_submission_valid(sheet_data):
-    for tag, placeholder in REQUIRED_TAGS.items():
-        if not sheet_data.get(tag) or sheet_data[tag] == placeholder:
-            print('\nCould not find submission for tag "{0}"'.format(tag))
-            print('Maybe you forgot to save the notebook?')
-            if 'output' in tag:
-                print('Or forgot to run all cells?')
-            return False
-    return True
-
-def submit(sub, verbose=False):
+def submit(sub):
     user = sub['email']
     for sheet_name, sheet_data in sub['submission'].items():
         print('Posting answers for', sheet_name)
         sheet_data['email'] = user
         sheet_data['sheet'] = sheet_name
         sheet_data['timestamp'] = datetime.now()
-        final_submission = transform_sheet_data(sheet_data)
-        if not is_submission_valid(sheet_data):
-            return False
-        if verbose:
-            print('Your submission:', final_submission)
         r = requests.post(
             SCRIPT_URL,
-            data=final_submission
+            data=transform_sheet_data(sheet_data)
         )
         if not r.ok:
             return False
     return True
 
-def create_and_submit(files=[], verbose=False):
-    sub = get_responses(files)
+def create_and_submit(notebooks=[]):
+    sub = get_responses(notebooks)
     user = input('Enter your Berkeley email address: ')
     if submit({
         'email': user,
         'submission': sub
-    }, verbose=verbose):
-        print('\nSubmitted!')
+    }):
+        print('Submitted!')
     else:
-        print('\nCould not submit, please try again later')
+        print('Could not submit, please try again later')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -120,7 +88,7 @@ if __name__ == '__main__':
     if submit({
         'email': email,
         'submission': submission
-    }, verbose=True):
+    }):
         print('Submitted!')
     else:
         print('Could not submit, please try again later')
