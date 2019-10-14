@@ -8,8 +8,8 @@ Each semester in Career Exploration, we cover a wide breadth of topics. This sem
 1. Intro to Datahub and Career Exploration
 2. Python
 3. Numpy/Pandas
-4. Visualizations and Linear Regression
-5. Intro to Linear Algebra for Data Science
+4. Visualizations
+5. Intro to Linear Algebra and Linear Regression
 6. Intro to Machine Learning
 7. The Bias Variance Tradeoff, Regularization
 8. Kaggle 1 Data Cleaning and Exploratory Data Analysis
